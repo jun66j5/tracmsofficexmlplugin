@@ -1,0 +1,121 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:x="urn:schemas-microsoft-com:office:excel"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="macros.html" />
+
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>$title</title>
+    <style type="text/css">
+      body {
+        font-family: sans-serif;
+        font-size: 9pt;
+      }
+      br {
+        mso-data-placement: same-cell;
+      }
+      td, th {
+        vertical-align: middle;
+        border: thin solid #404040;
+        vnd.ms-excel.numberformat: @;
+      }
+      thead th {
+        font-weight: bold;
+        background-color: #404040;
+        color: #ffffff;
+        border-color: #ffffff;
+        vnd.ms-excel.numberformat: @;
+      }
+      td.id {
+        vnd.ms-excel.numberformat: "#"0;
+      }
+      td.time, td.changetime {
+        vnd.ms-excel.numberformat: YYYY-MM-DD HH:MM:SS;
+      }
+    </style>
+${Markup('&lt;!--[if gte mso 9]&gt;')}<xml>
+ <x:ExcelWorkbook>
+  <x:ExcelWorksheets>
+   <x:ExcelWorksheet>
+    <x:Name>$title</x:Name>
+    <x:WorksheetOptions>
+     <x:Print>
+      <x:ValidPrinterInfo/>
+     </x:Print>
+    </x:WorksheetOptions>
+   </x:ExcelWorksheet>
+  </x:ExcelWorksheets>
+ </x:ExcelWorkbook>
+</xml>${Markup('&lt;![endif]--&gt;')}
+  </head>
+
+  <body>
+    <py:def function="num_matches(v)">
+      <span class="numrows">(${v or 'No'} match${v != 1 and 'es' or ''})</span>
+    </py:def>
+
+    <div id="content" class="query">
+      <h1>$title ${num_matches(query.num_items)}</h1>
+
+      <div py:if="description" id="description" xml:space="preserve">
+        ${wiki_to_html(context(report_resource), description)}
+      </div>
+
+      <py:for each="group_index, (groupname, results) in enumerate(groups)">
+        <h2 class="report-result" py:if="groupname">
+          ${fields[query.group].label}:
+          ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
+          ${num_matches(len(results))}
+        </h2>
+
+        <table class="listing tickets">
+          <thead>
+            <tr>
+              <th py:for="header in headers" class="$header.name">${header.label}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr py:if="not results" class="even">
+              <td colspan="${len(headers)}">
+                No tickets found
+              </td>
+            </tr>
+            <py:for each="idx, result in enumerate(results)">
+              <py:with vars="ticket_context = context('ticket', result.id)">
+                <py:if test="'TICKET_VIEW' in perm(ticket_context.resource)">
+                  <tr class="${idx % 2 and 'odd' or 'even'} prio${result.priority_value}"
+                      py:with="ticket_href = abs_href.ticket(result.id)">
+                    <py:for each="idx, header in enumerate(headers)" py:choose="">
+                      <py:with vars="name = header.name; value = result[name]">
+                        <td py:when="name == 'id'" class="id"><a href="$ticket_href" title="View ticket" class="${classes(closed=result.status == 'closed')}">$result.id</a></td>
+                        <td py:otherwise="" class="$name" py:choose="">
+                          <py:when test="isinstance(value, datetime)">${format_datetime(value)}</py:when>
+                          <py:when test="name == 'reporter'">${authorinfo(value)}</py:when>
+                          <py:when test="name == 'cc'">${format_emails(ticket_context, value)}</py:when>
+                          <py:when test="name == 'owner' and value">${authorinfo(value)}</py:when>
+                          <py:when test="name == 'milestone'"><a title="View milestone" href="${abs_href.milestone(value)}">${value}</a></py:when>
+                          <py:when test="header.wikify">${wiki_to_oneliner(ticket_context, value)}</py:when>
+                          <py:otherwise>$value</py:otherwise>
+                        </td>
+                      </py:with>
+                    </py:for>
+                  </tr>
+                </py:if>
+              </py:with>
+            </py:for>
+            <tr py:if="group_index == len(groups)-1 and last_group_is_partial">
+              <td colspan="${len(headers)}">
+                <i>(more results for this group on next page)</i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </py:for>
+    </div>
+  </body>
+</html>

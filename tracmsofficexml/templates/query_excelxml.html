@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:py="http://genshi.edgewall.org/"
+          xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="macros.html" />
+
+  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+    <Title>Custom Query</Title>
+    <LastAuthor>Trac</LastAuthor>
+    <Created>${format_datetime(None, 'iso8601')}</Created>
+  </DocumentProperties>
+
+  <Styles>
+    <Style ss:ID="Default" ss:Name="Normal">
+      <Alignment ss:Vertical="Center"/>
+      <Borders/>
+      <Font x:Family="Modern" ss:Size="9"/>
+      <Interior/>
+      <NumberFormat/>
+      <Protection/>
+    </Style>
+    <Style ss:ID="styleHyperLink" ss:Name="HyperLink">
+      <Font ss:Color="#0000FF" ss:Underline="Single"/>
+    </Style>
+    <Style ss:ID="s21">
+      <Font x:Family="Swiss" ss:Size="9"/>
+    </Style>
+    <Style ss:ID="s22">
+      <Font x:Family="Swiss" ss:Size="24" ss:Bold="1"/>
+    </Style>
+    <Style ss:ID="s24">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FFFFFF"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FFFFFF"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FFFFFF"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FFFFFF"/>
+      </Borders>
+      <Font x:Family="Swiss" ss:Size="9" ss:Color="#FFFFFF" ss:Bold="1"/>
+      <Interior ss:Color="#333333" ss:Pattern="Solid"/>
+      <NumberFormat ss:Format="@"/>
+    </Style>
+    <Style ss:ID="s27" ss:Parent="styleHyperLink">
+      <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+      </Borders>
+      <NumberFormat ss:Format="&quot;#&quot;0"/>
+    </Style>
+    <Style ss:ID="s28">
+      <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+      </Borders>
+      <Font x:Family="Swiss" ss:Size="9"/>
+      <NumberFormat ss:Format="@"/>
+    </Style>
+    <Style ss:ID="s29" ss:Parent="styleHyperLink">
+      <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
+      </Borders>
+      <NumberFormat ss:Format="@"/>
+    </Style>
+  </Styles>
+
+    <py:def function="num_matches(v)">(${v or 'No'} match${v != 1 and 'es' or ''})</py:def>
+
+  <Worksheet ss:Name="Custom Query">
+    <Table x:FullColumns="1" x:FullRows="1" ss:StyleID="s21" ss:DefaultColumnWidth="42" ss:DefaultRowHeight="12">
+      <Row>
+        <Cell ss:StyleID="s22">
+          <Data ss:Type="String">$title ${num_matches(query.num_items)}</Data>
+        </Cell>
+      </Row>
+      <Row py:if="description">
+        <Cell ss:StyleID="s22">
+          <Data ss:Type="String">${wiki_to_html(context(report_resource), description)}</Data>
+        </Cell>
+      </Row>
+      <py:for each="group_index, (groupname, results) in enumerate(groups)">
+        <Row py:if="groupname">
+          <Cell ss:StyleID="s22">
+            <Data ss:Type="String">
+              ${fields[query.group].label}:
+              ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
+              ${num_matches(len(results))}
+            </Data>
+          </Cell>
+        </Row>
+        <Row ss:Index="3">
+          <Cell ss:StyleID="s24" py:for="header in headers">
+            <Data ss:Type="String">${header.label}</Data>
+          </Cell>
+        </Row>
+        <Row py:if="not results">
+          <Cell ss:StyleID="s24">
+            <Data ss:Type="String">No tickets found</Data>
+          </Cell>
+        </Row>
+        <py:for each="idx, result in enumerate(results)">
+          <py:with vars="ticket_context = context('ticket', result.id)">
+            <py:if test="'TICKET_VIEW' in perm(ticket_context.resource)">
+              <Row py:with="ticket_href = abs_href.ticket(result.id)">
+                <py:for each="idx, header in enumerate(headers)" py:choose="">
+                  <py:with vars="name = header.name; value = result[name]">
+                    <Cell py:when="name == 'id'" ss:StyleID="s27" ss:HRef="$ticket_href" x:HRefScreenTip="View ticket">
+                      <Data ss:Type="Number">$result.id</Data>
+                    </Cell>
+                    <Cell py:when="isinstance(value, datetime)" ss:StyleID="s28">
+                      <Data ss:Type="String">${format_datetime(value)}</Data>
+                    </Cell>
+                    <Cell py:when="name == 'reporter' or name == 'owner' and value" ss:StyleID="s28">
+                      <Data ss:Type="String">${authorinfo(value)}</Data>
+                    </Cell>
+                    <Cell py:when="name == 'cc'" ss:StyleID="s28">
+                      <Data ss:Type="String">${format_emails(ticket_context, value)}</Data>
+                    </Cell>
+                    <Cell py:when="name == 'milestone'" ss:StyleID="s27" ss:HRef="${abs_href.milestone(value)}" x:HRefScreenTip="View milestone">
+                      <Data ss:Type="String">$value</Data>
+                    </Cell>
+                    <Cell py:when="header.wikify" ss:StyleID="s28">
+                      <Data ss:Type="String">${wiki_to_oneliner(ticket_context, value)}</Data>
+                    </Cell>
+                    <Cell py:otherwise="" ss:StyleID="s28">
+                      <Data ss:Type="String">$value</Data>
+                    </Cell>
+                  </py:with>
+                </py:for>
+              </Row>
+            </py:if>
+          </py:with>
+        </py:for>
+        <Row py:if="group_index == len(groups)-1 and last_group_is_partial">
+          <Cell>
+            <Data ss:Type="s27">(more results for this group on next page)</Data>
+          </Cell>
+        </Row>
+      </py:for>
+    </Table>
+  </Worksheet>
+</Workbook>
