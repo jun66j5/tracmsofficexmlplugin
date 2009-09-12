@@ -15,6 +15,9 @@
         font-family: sans-serif;
         font-size: 9pt;
       }
+      a {
+        font-family: sans-serif;
+      }
       br {
         mso-data-placement: same-cell;
       }
@@ -94,7 +97,7 @@ ${Markup('&lt;!--[if gte mso 9]&gt;')}<xml>
                       <py:with vars="name = header.name; value = result[name]">
                         <td py:when="name == 'id'" class="id"><a href="$ticket_href" title="View ticket" class="${classes(closed=result.status == 'closed')}">$result.id</a></td>
                         <td py:otherwise="" class="$name" py:choose="">
-                          <py:when test="isinstance(value, datetime)">${format_datetime(value)}</py:when>
+                          <py:when test="isinstance(value, datetime)">${format_datetime(value, '%Y-%m-%d %H:%M:%S')}</py:when>
                           <py:when test="name == 'reporter'">${authorinfo(value)}</py:when>
                           <py:when test="name == 'cc'">${format_emails(ticket_context, value)}</py:when>
                           <py:when test="name == 'owner' and value">${authorinfo(value)}</py:when>

@@ -66,7 +66,7 @@
       <Font x:Family="Swiss" ss:Size="9"/>
       <NumberFormat ss:Format="@"/>
     </Style>
-    <Style ss:ID="s29" ss:Parent="styleHyperLink">
+    <Style ss:ID="s29">
       <Alignment ss:Vertical="Center" ss:WrapText="1"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
@@ -74,7 +74,8 @@
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#333333"/>
       </Borders>
-      <NumberFormat ss:Format="@"/>
+      <Font x:Family="Swiss" ss:Size="9"/>
+      <NumberFormat ss:Format="yyyy-mm-dd\ hh:mm:ss;@"/>
     </Style>
   </Styles>
 
@@ -121,8 +122,8 @@
                     <Cell py:when="name == 'id'" ss:StyleID="s27" ss:HRef="$ticket_href" x:HRefScreenTip="View ticket">
                       <Data ss:Type="Number">$result.id</Data>
                     </Cell>
-                    <Cell py:when="isinstance(value, datetime)" ss:StyleID="s28">
-                      <Data ss:Type="String">${format_datetime(value)}</Data>
+                    <Cell py:when="isinstance(value, datetime)" ss:StyleID="s29">
+                      <Data ss:Type="DateTime">${format_datetime(value, '%Y-%m-%dT%H:%M:%S')}</Data>
                     </Cell>
                     <Cell py:when="name == 'reporter' or name == 'owner' and value" ss:StyleID="s28">
                       <Data ss:Type="String">${authorinfo(value)}</Data>
