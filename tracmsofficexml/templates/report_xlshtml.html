@@ -1,0 +1,171 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:x="urn:schemas-microsoft-com:office:excel"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="macros.html" />
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>$title</title>
+    <style type="text/css">
+      body {
+        font-family: sans-serif;
+        font-size: 9pt;
+      }
+      a {
+        font-family: sans-serif;
+      }
+      br {
+        mso-data-placement: same-cell;
+      }
+      td, th {
+        vertical-align: middle;
+        border: thin solid #404040;
+        vnd.ms-excel.numberformat: @;
+      }
+      thead th {
+        font-weight: bold;
+        background-color: #404040;
+        color: #ffffff;
+        border-color: #ffffff;
+        vnd.ms-excel.numberformat: @;
+      }
+      td.id {
+        vnd.ms-excel.numberformat: "#"0;
+      }
+      td.time {
+        vnd.ms-excel.numberformat: HH:MM:SS;
+      }
+      td.datetime {
+        vnd.ms-excel.numberformat: YYYY-MM-DD HH:MM:SS;
+      }
+    </style>
+${Markup('&lt;!--[if gte mso 9]&gt;')}<xml>
+ <x:ExcelWorkbook>
+  <x:ExcelWorksheets>
+   <x:ExcelWorksheet>
+    <x:Name>$title</x:Name>
+    <x:WorksheetOptions>
+     <x:Print>
+      <x:ValidPrinterInfo/>
+     </x:Print>
+    </x:WorksheetOptions>
+   </x:ExcelWorksheet>
+  </x:ExcelWorksheets>
+ </x:ExcelWorkbook>
+</xml>${Markup('&lt;![endif]--&gt;')}
+  </head>
+
+  <body>
+    <h1>$title <span py:if="numrows and report.id != -1" class="numrows">($numrows matches)</span></h1>
+
+    <div py:if="description" id="description" xml:space="preserve">
+      ${wiki_to_html(context, description)}
+    </div>
+
+    <py:for each="value_for_group, row_group in row_groups">
+      <h2 class="report-result" py:if="value_for_group">$value_for_group
+      <span class="numrows" py:with="cnt = len(row_group)">(${cnt or 'No'} match${cnt != 1 and 'es' or ''})</span></h2>
+      <table class="listing ${report.id == -1 and 'reports' or 'tickets'}">
+        <thead>
+          <tr py:for="header_group in header_groups">
+            <th py:for="header in header_group" py:if="not header.hidden" py:with="fullrow = header is header_group[-1]"
+              colspan="${fullrow and '100' or None}">$header.title</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <py:for each="row in row_group">
+            <tr py:for="cell_group in row.cell_groups"
+              py:with="fullrow = len(cell_group) == 1;
+                       td_attrs = fullrow and {'class': 'fullrow', 'colspan': 100} or {}"
+              class="${'__color__' in row and 'color'+row.__color__+'-' or ''}${row.__idx__ % 2 and 'odd' or 'even'}"
+              style="${'__bgcolor__' in row and 'background: '+row.__bgcolor__+';' or None
+              }${'__fgcolor__' in row and 'color: '+row.__fgcolor__+';' or None
+              }${'__style__' in row and row.__style__+';' or None
+              }${fullrow and 'border: none; padding: 0;' or None}">
+
+              <py:for each="cell in cell_group">
+                <py:if test="not cell.header.hidden">
+                  <py:with vars="col = cell.header.col.strip('_')">
+                    <py:choose>
+
+                      <!--! for the report listing -->
+                      <py:when test="col == 'report'">
+                        <td class="$col" py:attrs="td_attrs">
+                          <a title="View report" href="${abs_href.report(cell.value)}">{$cell.value}</a>
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <py:when test="col == 'title' and report.id == -1">
+                        <td class="$col" py:attrs="td_attrs">
+                          <a title="View report" href="${abs_href.report(row.id)}">$cell.value</a>
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <!--! for the ticket listing -->
+                      <py:when test="col in ('ticket', 'id')">
+                        <td class="id" py:attrs="td_attrs">
+                          <a title="View ${row.resource.realm}" href="${abs_url_of(row.resource)}">$cell.value</a>
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <py:when test="col == 'summary' and row.id">
+                        <td class="$col" py:attrs="td_attrs">$cell.value
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <!--! generic fields -->
+                      <py:when test="col == 'time'">
+                        <td class="date" py:attrs="td_attrs">
+                          ${cell.value != '' and format_time(int(cell.value), '%H:%M:%S') or '--'}
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <py:when test="col in ('date', 'created', 'modified', 'datetime')">
+                        <td class="datetime" py:attrs="td_attrs">
+                          ${cell.value != '' and format_date(int(cell.value), '%Y-%m-%d %H:%M:%S') or '--'}
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <py:when test="col == 'description'">
+                        <td class="$col" py:attrs="td_attrs" xml:space="preserve">
+                          ${wiki_to_html(context(row.resource), cell.value)}
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <py:when test="col == 'milestone'">
+                        <td class="$col" py:attrs="td_attrs">
+                          <a title="View milestone" href="${abs_href.milestone(cell.value)}">$cell.value</a>
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:when>
+
+                      <py:otherwise>
+                        <td class="$col" py:attrs="td_attrs">$cell.value
+                          <hr py:if="fullrow"/>
+                        </td>
+                      </py:otherwise>
+
+                    </py:choose>
+                  </py:with>
+                </py:if>
+              </py:for>
+            </tr>
+          </py:for>
+        </tbody>
+      </table>
+    </py:for>
+
+    <div py:if="numrows == 0" id="report-notfound">No matches found.</div>
+  </body>
+</html>
