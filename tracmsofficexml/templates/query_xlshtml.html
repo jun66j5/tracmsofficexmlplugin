@@ -9,9 +9,10 @@
 
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="ProgId" content="Excel.Sheet" />
     <title>$title</title>
     <style type="text/css">
-      body {
+      body, table {
         font-family: sans-serif;
         font-size: 9pt;
       }
@@ -57,12 +58,8 @@ ${Markup('&lt;!--[if gte mso 9]&gt;')}<xml>
   </head>
 
   <body>
-    <py:def function="num_matches(v)">
-      <span class="numrows">(${v or 'No'} match${v != 1 and 'es' or ''})</span>
-    </py:def>
-
     <div id="content" class="query">
-      <h1>$title ${num_matches(query.num_items)}</h1>
+      <h1>$title <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', query.num_items)})</span></h1>
 
       <div py:if="description" id="description" xml:space="preserve">
         ${wiki_to_html(context(report_resource), description)}
@@ -72,7 +69,7 @@ ${Markup('&lt;!--[if gte mso 9]&gt;')}<xml>
         <h2 class="report-result" py:if="groupname">
           ${fields[query.group].label}:
           ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
-          ${num_matches(len(results))}
+          <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', len(results))})</span>
         </h2>
 
         <table class="listing tickets">

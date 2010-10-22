@@ -18,8 +18,8 @@ class ExcelQueryModule(Component):
     def get_supported_conversions(self):
         yield ('xlshtml', 'Excel HTML', 'html',
                'trac.ticket.Query', 'application/vnd.ms-excel', 8)
-        yield ('excelxml', 'Excel XML', 'xml',
-               'trac.ticket.Query', 'application/vnd.ms-excel', 8)
+        # yield ('excelxml', 'Excel XML', 'xml',
+        #        'trac.ticket.Query', 'application/vnd.ms-excel', 8)
 
     def convert_content(self, req, mimetype, query, key):
         if key == 'xlshtml':
@@ -39,7 +39,9 @@ class ExcelQueryModule(Component):
         # extract all fields
         cols = ['id']
         cols += [field['name'] for field in query.fields]
-        cols += ['time', 'changetime']
+        for name in ('time', 'changetime'):
+            if name not in cols:
+                cols.append(name)
         query.cols = cols
 
         db = self.env.get_db_cnx()
