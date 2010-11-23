@@ -2,7 +2,8 @@
 
 import re
 
-from trac.core import *
+from trac import __version__
+from trac.core import Component, implements
 from trac.mimeview import Context
 from trac.resource import Resource
 from trac.util.text import unicode_urlencode
@@ -27,7 +28,7 @@ class ExcelReportModule(Component):
         if template == 'report_view.html' and req.args.get('id'):
             format = req.args.get('format')
             if format == 'xlshtml':
-                template = 'report_xlshtml.html'
+                template = self._get_xlshtml_template()
             elif format == 'excelxml':
                 template = 'report_excelxml.html'
             else:
@@ -39,6 +40,11 @@ class ExcelReportModule(Component):
             else:
                 self._add_alternate_links(req)
         return template, data, content_type
+
+    def _get_xlshtml_template(self):
+        if 'ja' in __version__:
+            return 'report_xlshtml.ja.html'
+        return 'report_xlshtml.html'
 
     def _add_alternate_links(self, req):
         params = {}
